@@ -1,12 +1,14 @@
 import * as THREE from 'three';
 import Sizes from './Utils/Sizes.js';
 import Time from './Utils/Time.js';
+import Resources from './Utils/Resources.js';
 import Camera from './Camera.js';
 import Renderer from './Renderer.js';
 import Physics from './Physics.js';
 import Controls from './Controls.js';
 import World from './World/World.js';
 import StatsGL from 'stats-gl';
+import sources from './sources.js';
 
 console.log('Experience module loaded');
 
@@ -31,6 +33,7 @@ export default class Experience {
         // Utilities
         this.sizes = new Sizes();
         this.time = new Time();
+        this.resources = new Resources(sources);
 
         // Core Components
         this.scene = new THREE.Scene();
@@ -38,7 +41,11 @@ export default class Experience {
         this.renderer = new Renderer();
         this.physics = new Physics();
         this.controls = new Controls();
-        this.world = new World();
+
+        // World waits for resources and physics to be ready
+        this.resources.on('ready', () => {
+            this.world = new World();
+        });
 
         // Dev Stats
         this.stats = new StatsGL({
