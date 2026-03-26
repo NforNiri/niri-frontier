@@ -13,7 +13,7 @@ export default class Controls {
             left: false,
             right: false,
             boost: false,
-            action: false
+            brake: false
         };
 
         this.setKeyboard();
@@ -52,7 +52,8 @@ export default class Controls {
                 this.keys.boost = isPressed;
                 break;
             case 'Space':
-                this.keys.action = isPressed;
+                event.preventDefault(); // prevent page scroll
+                this.keys.brake = isPressed;
                 break;
         }
     }

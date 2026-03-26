@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import Experience from './Experience.js';
 
 console.log('Renderer module loaded');
@@ -37,6 +38,7 @@ export default class Renderer {
         this.instance.setClearColor(0x0A0E1A, 1);
 
         this.setPostProcessing();
+        this.setCSS2DRenderer();
 
         this.resize();
     }
@@ -61,6 +63,16 @@ export default class Renderer {
         console.log('✅ Bloom post-processing enabled');
     }
 
+    setCSS2DRenderer() {
+        this.css2dRenderer = new CSS2DRenderer();
+        this.css2dRenderer.setSize(this.sizes.width, this.sizes.height);
+        this.css2dRenderer.domElement.style.position = 'absolute';
+        this.css2dRenderer.domElement.style.top = '0';
+        this.css2dRenderer.domElement.style.left = '0';
+        this.css2dRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(this.css2dRenderer.domElement);
+    }
+
     resize() {
         this.instance.setSize(this.sizes.width, this.sizes.height);
         this.instance.setPixelRatio(this.sizes.pixelRatio);
@@ -70,6 +82,11 @@ export default class Renderer {
             this.composer.setSize(this.sizes.width, this.sizes.height);
             this.composer.setPixelRatio(this.sizes.pixelRatio);
         }
+
+        // Update CSS2D renderer
+        if (this.css2dRenderer) {
+            this.css2dRenderer.setSize(this.sizes.width, this.sizes.height);
+        }
     }
 
     render() {
@@ -78,6 +95,11 @@ export default class Renderer {
             this.composer.render();
         } else {
             this.instance.render(this.scene, this.camera.instance);
+        }
+
+        // Render CSS2D labels
+        if (this.css2dRenderer) {
+            this.css2dRenderer.render(this.scene, this.camera.instance);
         }
     }
 }

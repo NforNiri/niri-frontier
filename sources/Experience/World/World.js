@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import Experience from '../Experience.js';
 import Environment from './Environment.js';
+import Zone from './Zone.js';
 import PhysicalVehicle from '../Vehicle/PhysicalVehicle.js';
 import VisualVehicle from '../Vehicle/VisualVehicle.js';
+import UI from '../UI/UI.js';
 
 console.log('World module loaded');
 
@@ -39,6 +41,15 @@ export default class World {
             this.experience.addUpdate(3, () => {
                 this.visualVehicle.update(this.experience.controls);
             });
+
+            // Zone system
+            this.zones = new Zone(this.physicalVehicle);
+            this.experience.addUpdate(4, () => {
+                this.zones.update();
+            });
+
+            // UI system
+            this.ui = new UI();
 
             // Remove test cube
             if (this.testCube) {

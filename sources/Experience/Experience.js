@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import Sizes from './Utils/Sizes.js';
 import Time from './Utils/Time.js';
 import Resources from './Utils/Resources.js';
+import EventEmitter from './Utils/EventEmitter.js';
 import Camera from './Camera.js';
 import Renderer from './Renderer.js';
 import Physics from './Physics.js';
@@ -22,6 +23,12 @@ export default class Experience {
             return instance;
         }
         instance = this;
+
+        // Add EventEmitter capabilities
+        const emitter = new EventEmitter();
+        this.on = emitter.on.bind(emitter);
+        this.off = emitter.off.bind(emitter);
+        this.emit = emitter.emit.bind(emitter);
 
         // Container
         this.canvas = document.createElement('canvas');
