@@ -16,7 +16,7 @@ export default class PhysicalVehicle {
         // dynamic type
         let rigidBodyDesc = RAPIER.RigidBodyDesc.dynamic()
             .setTranslation(0, 2, 0)
-            .setAdditionalMass(30)
+            .setAdditionalMass(200)
             .setLinearDamping(8.0)
             .setAngularDamping(8.0);
         
@@ -61,7 +61,7 @@ export default class PhysicalVehicle {
         // Force tapers off as speed approaches max (car-like resistance)
         const speedRatio = Math.min(speed / maxSpeed, 1);
         const forceTaper = 1 - speedRatio * 0.85; // at max speed, only 15% force remains
-        const baseForceMagnitude = controls.keys.forward ? 30 : controls.keys.backward ? -18 : 0;
+        const baseForceMagnitude = controls.keys.forward ? 200 : controls.keys.backward ? -120 : 0;
         const boostMultiplier = controls.keys.boost && controls.keys.forward ? 1.6 : 1.0;
         const finalForce = baseForceMagnitude * boostMultiplier * forceTaper;
 
@@ -74,7 +74,7 @@ export default class PhysicalVehicle {
 
         // Brake (Space) — strong counter-force opposing current velocity
         if (controls.keys.brake && speed > 0.3) {
-            const brakeForce = 100;
+            const brakeForce = 660;
             this.rigidBody.addForce({
                 x: -velocity.x / speed * brakeForce,
                 y: 0,
@@ -91,7 +91,7 @@ export default class PhysicalVehicle {
 
         // Turn friction — slows ship when steering for tighter control
         if (isTurning && speed > 0.5) {
-            const turnBrake = 30 * speedRatio; // stronger at higher speed
+            const turnBrake = 200 * speedRatio; // stronger at higher speed
             this.rigidBody.addForce({
                 x: -velocity.x / speed * turnBrake,
                 y: 0,
@@ -108,8 +108,8 @@ export default class PhysicalVehicle {
         const targetHeight = 2.0;
         if (position.y < targetHeight + 1.0) {
             const heightError = targetHeight - position.y;
-            const springForce = heightError * 70;
-            const dampForce = -velocity.y * 50;
+            const springForce = heightError * 460;
+            const dampForce = -velocity.y * 330;
             const hoverForce = springForce + dampForce;
 
             this.rigidBody.addForce({ x: 0, y: hoverForce, z: 0 }, true);

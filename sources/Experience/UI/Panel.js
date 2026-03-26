@@ -1,7 +1,9 @@
 import gsap from 'gsap';
+import Experience from '../Experience.js';
 
 export default class Panel {
     constructor() {
+        this.experience = Experience.getInstance();
         this.isVisible = false;
         this.currentZone = null;
         this.createElement();
@@ -41,6 +43,8 @@ export default class Panel {
 
         this.element.style.display = 'flex';
         this.isVisible = true;
+
+        if (this.experience.audio) this.experience.audio.playPanelOpen();
 
         gsap.killTweensOf(this.element);
         gsap.to(this.element, {

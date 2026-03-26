@@ -6,5 +6,6 @@ export default defineConfig({
   plugins: [
     wasm(),
     topLevelAwait()
-  ]
+  ],
+  publicDir: 'static'
 });

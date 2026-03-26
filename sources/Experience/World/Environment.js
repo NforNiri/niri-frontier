@@ -18,17 +18,33 @@ export default class Environment {
     }
 
     setSunlight() {
-        this.sunLight = new THREE.DirectionalLight(0x4488ff, 1.5);
+        // Primary directional — cool white from above-right
+        this.sunLight = new THREE.DirectionalLight(0xCCDDFF, 2.5);
         this.sunLight.castShadow = true;
-        this.sunLight.position.set(10, 20, 10);
+        this.sunLight.shadow.mapSize.width = 2048;
+        this.sunLight.shadow.mapSize.height = 2048;
+        this.sunLight.shadow.camera.near = 1;
+        this.sunLight.shadow.camera.far = 100;
+        this.sunLight.shadow.camera.left = -60;
+        this.sunLight.shadow.camera.right = 60;
+        this.sunLight.shadow.camera.top = 60;
+        this.sunLight.shadow.camera.bottom = -60;
+        this.sunLight.position.set(20, 40, 20);
         this.scene.add(this.sunLight);
+
+        // Secondary fill light — warm kick from opposite side
+        this.fillLight = new THREE.DirectionalLight(0xFFAA66, 0.8);
+        this.fillLight.position.set(-15, 10, -15);
+        this.scene.add(this.fillLight);
     }
 
     setAmbientLight() {
-        this.ambientLight = new THREE.AmbientLight(0x222244, 0.5);
+        // Overall ambient — neutral white so Kenney colors come through
+        this.ambientLight = new THREE.AmbientLight(0x666688, 1.2);
         this.scene.add(this.ambientLight);
 
-        this.hemisphereLight = new THREE.HemisphereLight(0x4488FF, 0x1A1F3A, 0.3);
+        // Hemisphere — sky blue from above, dark ground from below
+        this.hemisphereLight = new THREE.HemisphereLight(0x88AAFF, 0x224488, 0.6);
         this.scene.add(this.hemisphereLight);
     }
 

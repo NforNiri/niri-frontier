@@ -16,7 +16,12 @@ export default class Renderer {
         this.scene = this.experience.scene;
         this.camera = this.experience.camera;
 
+        // Quality detection
+        this.quality = this.detectQuality();
+        console.log(`🎮 Quality: ${this.quality}`);
+
         this.setInstance();
+        this.createQualityToggle();
 
         // Listen to resize
         this.sizes.on('resize', () => {
@@ -24,34 +29,72 @@ export default class Renderer {
         });
     }
 
+    /**
+     * Auto-detect quality based on device capabilities
+     */
+    detectQuality() {
+        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 768;
+        const pixelRatio = window.devicePixelRatio;
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+        let gpuTier = 'mid';
+
+        if (gl) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            if (debugInfo) {
+                const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase();
+                // Detect low-end GPUs
+                if (renderer.includes('intel') || renderer.includes('mesa') || renderer.includes('swiftshader')) {
+                    gpuTier = 'low';
+                }
+                // Detect high-end GPUs
+                if (renderer.includes('nvidia') || renderer.includes('radeon') || renderer.includes('geforce')) {
+                    gpuTier = 'high';
+                }
+            }
+        }
+
+        if (isMobile || gpuTier === 'low') return 'low';
+        if (gpuTier === 'high' && pixelRatio <= 2) return 'high';
+        return 'high'; // default to high for desktop
+    }
+
     setInstance() {
         this.instance = new THREE.WebGLRenderer({
             canvas: this.canvas,
-            antialias: true
+            antialias: this.quality === 'high',
+            powerPreference: this.quality === 'low' ? 'low-power' : 'high-performance',
         });
 
         this.instance.outputColorSpace = THREE.SRGBColorSpace;
         this.instance.toneMapping = THREE.ACESFilmicToneMapping;
         this.instance.toneMappingExposure = 1.0;
-        this.instance.shadowMap.enabled = true;
-        this.instance.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        // Shadows — conditional on quality
+        if (this.quality === 'high') {
+            this.instance.shadowMap.enabled = true;
+            this.instance.shadowMap.type = THREE.PCFSoftShadowMap;
+        } else {
+            this.instance.shadowMap.enabled = false;
+        }
+
         this.instance.setClearColor(0x0A0E1A, 1);
 
-        this.setPostProcessing();
-        this.setCSS2DRenderer();
+        // Post-processing — only on high quality
+        if (this.quality === 'high') {
+            this.setPostProcessing();
+        }
 
+        this.setCSS2DRenderer();
         this.resize();
     }
 
     setPostProcessing() {
-        // Effect Composer
         this.composer = new EffectComposer(this.instance);
 
-        // Render Pass (main scene render)
         this.renderPass = new RenderPass(this.scene, this.camera.instance);
         this.composer.addPass(this.renderPass);
 
-        // Bloom Pass (neon glow effect)
         this.bloomPass = new UnrealBloomPass(
             new THREE.Vector2(this.sizes.width, this.sizes.height),
             1.5,    // strength
@@ -73,31 +116,104 @@ export default class Renderer {
         document.body.appendChild(this.css2dRenderer.domElement);
     }
 
-    resize() {
-        this.instance.setSize(this.sizes.width, this.sizes.height);
-        this.instance.setPixelRatio(this.sizes.pixelRatio);
+    /**
+     * Quality toggle UI button
+     */
+    createQualityToggle() {
+        this.toggleBtn = document.createElement('button');
+        this.toggleBtn.id = 'quality-toggle';
+        this.toggleBtn.textContent = this.quality === 'high' ? '✨ HIGH' : '⚡ LOW';
+        this.toggleBtn.title = 'Toggle quality (H key)';
+        document.body.appendChild(this.toggleBtn);
 
-        // Update composer
-        if (this.composer) {
-            this.composer.setSize(this.sizes.width, this.sizes.height);
-            this.composer.setPixelRatio(this.sizes.pixelRatio);
+        // Style
+        const style = document.createElement('style');
+        style.textContent = `
+            #quality-toggle {
+                position: fixed;
+                top: 12px;
+                right: 12px;
+                z-index: 200;
+                background: rgba(10, 14, 26, 0.7);
+                border: 1px solid rgba(0, 240, 255, 0.4);
+                color: #00F0FF;
+                font-family: 'Orbitron', sans-serif;
+                font-size: 11px;
+                padding: 6px 14px;
+                border-radius: 20px;
+                cursor: pointer;
+                backdrop-filter: blur(4px);
+                transition: all 0.2s ease;
+                letter-spacing: 1px;
+            }
+            #quality-toggle:hover {
+                background: rgba(0, 240, 255, 0.15);
+                border-color: rgba(0, 240, 255, 0.8);
+                box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Click handler
+        this.toggleBtn.addEventListener('click', () => this.toggleQuality());
+
+        // H key toggle
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'KeyH') this.toggleQuality();
+        });
+    }
+
+    toggleQuality() {
+        this.quality = this.quality === 'high' ? 'low' : 'high';
+        this.toggleBtn.textContent = this.quality === 'high' ? '✨ HIGH' : '⚡ LOW';
+        console.log(`🎮 Quality switched to: ${this.quality}`);
+
+        // Toggle shadows
+        this.instance.shadowMap.enabled = this.quality === 'high';
+
+        // Toggle bloom
+        if (this.quality === 'high' && !this.composer) {
+            this.setPostProcessing();
         }
 
-        // Update CSS2D renderer
+        // Toggle pixel ratio for performance
+        if (this.quality === 'low') {
+            this.instance.setPixelRatio(1);
+            if (this.composer) this.composer.setPixelRatio(1);
+        } else {
+            const pr = Math.min(window.devicePixelRatio, 2);
+            this.instance.setPixelRatio(pr);
+            if (this.composer) this.composer.setPixelRatio(pr);
+        }
+
+        // Force shadow map update
+        this.instance.shadowMap.needsUpdate = true;
+    }
+
+    resize() {
+        this.instance.setSize(this.sizes.width, this.sizes.height);
+
+        const pr = this.quality === 'low' ? 1 : this.sizes.pixelRatio;
+        this.instance.setPixelRatio(pr);
+
+        if (this.composer) {
+            this.composer.setSize(this.sizes.width, this.sizes.height);
+            this.composer.setPixelRatio(pr);
+        }
+
         if (this.css2dRenderer) {
             this.css2dRenderer.setSize(this.sizes.width, this.sizes.height);
         }
     }
 
     render() {
-        // Use composer for post-processing effects
-        if (this.composer) {
+        // Use composer for bloom on high quality, direct render on low
+        if (this.quality === 'high' && this.composer) {
             this.composer.render();
         } else {
             this.instance.render(this.scene, this.camera.instance);
         }
 
-        // Render CSS2D labels
         if (this.css2dRenderer) {
             this.css2dRenderer.render(this.scene, this.camera.instance);
         }

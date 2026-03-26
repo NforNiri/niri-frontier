@@ -7,6 +7,8 @@ import Camera from './Camera.js';
 import Renderer from './Renderer.js';
 import Physics from './Physics.js';
 import Controls from './Controls.js';
+import LoadingScreen from './LoadingScreen.js';
+import Audio from './Audio.js';
 import World from './World/World.js';
 import StatsGL from 'stats-gl';
 import sources from './sources.js';
@@ -48,9 +50,11 @@ export default class Experience {
         this.renderer = new Renderer();
         this.physics = new Physics();
         this.controls = new Controls();
+        this.loadingScreen = new LoadingScreen();
 
-        // World waits for resources and physics to be ready
+        // World + Audio wait for resources to be ready
         this.resources.on('ready', () => {
+            this.audio = new Audio();
             this.world = new World();
         });
 

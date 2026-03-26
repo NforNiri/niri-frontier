@@ -1,11 +1,13 @@
 import Experience from '../Experience.js';
 import Panel from './Panel.js';
+import GameMenu from './GameMenu.js';
 import { getContent } from './panels/index.js';
 
 export default class UI {
     constructor() {
         this.experience = Experience.getInstance();
         this.panel = new Panel();
+        this.gameMenu = new GameMenu();
         this.exitTimeout = null;
 
         this.experience.on('zone:enter', (zoneId) => {

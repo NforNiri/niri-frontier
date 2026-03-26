@@ -27,6 +27,7 @@ export default class Zone {
             { id: 'creative', label: 'CREATIVE', position: new THREE.Vector3(0, 0, 75), color: 0xFF2D78, radius: 12 },
             { id: 'contact', label: 'CONTACT', position: new THREE.Vector3(-50, 0, 45), color: 0x00F0FF, radius: 12 },
             { id: 'resume', label: 'RESUME', position: new THREE.Vector3(-55, 0, -35), color: 0xFFB800, radius: 12 },
+            { id: 'behindthescenes', label: 'BTS', position: new THREE.Vector3(35, 0, -60), color: 0xBB44FF, radius: 12 },
         ];
     }
 
@@ -124,8 +125,10 @@ export default class Zone {
             }
             this.activeZone = closestZone.id;
             this.experience.emit('zone:enter', closestZone.id);
+            if (this.experience.audio) this.experience.audio.playZoneEnter();
         } else if (!closestZone && this.activeZone) {
             this.experience.emit('zone:exit', this.activeZone);
+            if (this.experience.audio) this.experience.audio.playZoneExit();
             this.activeZone = null;
         }
     }

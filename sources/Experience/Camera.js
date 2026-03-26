@@ -39,6 +39,8 @@ export default class Camera {
         this.controls.minDistance = 5;
         this.controls.maxDistance = 100;
         this.controls.setLookAt(0, 15, 30, 0, 0, 0); // initial position and look at origin
+
+        this.cinematicMode = false;
     }
 
     resize() {
@@ -46,7 +48,34 @@ export default class Camera {
         this.instance.updateProjectionMatrix();
     }
 
+    cinematicFlyover() {
+        this.cinematicMode = true;
+
+        // Increase smooth time for cinematic feel
+        this.controls.smoothTime = 1.0;
+
+        // Start from high bird's eye view
+        this.controls.setLookAt(0, 60, 80, 0, 0, 0, false);
+
+        // After a beat, sweep down toward the ship spawn point
+        setTimeout(() => {
+            this.controls.setLookAt(0, 12, 20, 0, 2, 0, true);
+        }, 500);
+
+        // After flyover completes, switch to normal follow mode
+        setTimeout(() => {
+            this.controls.smoothTime = 0.2;
+            this.cinematicMode = false;
+        }, 3500);
+    }
+
     update() {
+        // Skip vehicle tracking during cinematic
+        if (this.cinematicMode) {
+            this.controls.update(this.time.delta / 1000);
+            return;
+        }
+
         // Vehicle tracking logic
         if (this.experience.world && this.experience.world.physicalVehicle) {
             const shipPos = this.experience.world.physicalVehicle.getPosition();
