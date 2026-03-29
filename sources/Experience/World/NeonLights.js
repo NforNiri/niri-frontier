@@ -8,10 +8,8 @@ export default class NeonLights {
         this.time = this.experience.time;
 
         this.lights = [];
-        this.strips = [];
 
         this.createZoneLights();
-        this.createAccentStrips();
 
         console.log('✅ NeonLights initialized');
     }
@@ -79,63 +77,7 @@ export default class NeonLights {
         }
     }
 
-    /**
-     * Small emissive strips placed on/near structures — like LED accent bars
-     */
-    createAccentStrips() {
-        const strips = [
-            // ABOUT hangars
-            { pos: [-10, 2.5, -66], rot: 0, len: 4, color: 0x00F0FF },
-            { pos: [10, 2.5, -63], rot: Math.PI, len: 3, color: 0x00F0FF },
-            // DEV machines
-            { pos: [55, 1.5, -23], rot: 0, len: 3, color: 0x39FF14 },
-            { pos: [65, 1.5, -20], rot: Math.PI / 2, len: 4, color: 0x39FF14 },
-            // GEN AI corridors
-            { pos: [50, 1.5, 36], rot: Math.PI / 2, len: 5, color: 0xFFB800 },
-            { pos: [58, 1.5, 36], rot: Math.PI / 2, len: 5, color: 0xFFB800 },
-            // CREATIVE launch pad
-            { pos: [-6, 0.3, 73], rot: 0, len: 6, color: 0xFF2D78 },
-            { pos: [6, 0.3, 73], rot: 0, len: 6, color: 0xFF2D78 },
-            // CONTACT dishes
-            { pos: [-52, 2, 48], rot: Math.PI / 4, len: 3, color: 0x00F0FF },
-            { pos: [-45, 2, 40], rot: -Math.PI / 3, len: 3, color: 0x00F0FF },
-            // RESUME mining
-            { pos: [-55, 1.5, -33], rot: Math.PI / 6, len: 4, color: 0xFFB800 },
-            { pos: [-48, 1.5, -40], rot: -Math.PI / 4, len: 3, color: 0xFFB800 },
-            // Spawn hub
-            { pos: [-4, 0.3, -6], rot: Math.PI / 2, len: 4, color: 0x00F0FF },
-            { pos: [4, 0.3, -6], rot: Math.PI / 2, len: 4, color: 0x00F0FF },
-            // BTS lab
-            { pos: [30, 1.5, -56], rot: Math.PI / 4, len: 3, color: 0xBB44FF },
-            { pos: [38, 1.5, -66], rot: -Math.PI / 3, len: 3, color: 0xBB44FF },
-        ];
-
-        for (const s of strips) {
-            const geo = new THREE.PlaneGeometry(s.len, 0.15);
-            const mat = new THREE.MeshStandardMaterial({
-                color: s.color,
-                emissive: s.color,
-                emissiveIntensity: 2.0,
-                transparent: true,
-                opacity: 0.9,
-                side: THREE.DoubleSide,
-                depthWrite: false,
-            });
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.position.set(s.pos[0], s.pos[1], s.pos[2]);
-            mesh.rotation.y = s.rot;
-            this.scene.add(mesh);
-            this.strips.push({ mesh, mat, baseIntensity: 2.0 });
-        }
-    }
-
     update() {
-        if (!this.time) return;
-        const t = this.time.elapsed * 0.001;
-
-        // Subtle pulse on accent strips
-        for (const strip of this.strips) {
-            strip.mat.emissiveIntensity = strip.baseIntensity + Math.sin(t * 1.5 + strip.mesh.position.x * 0.1) * 0.4;
-        }
+        // no-op — kept for future use
     }
 }

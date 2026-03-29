@@ -8,71 +8,81 @@ export default class PhysicalVehicle {
         this.experience = Experience.getInstance();
         this.physics = this.experience.physics;
         this.world = this.physics.world;
-        
+
+        this.params = {
+            forwardForce:    70,   // confirmed good
+            backwardForce:   90,   // confirmed good
+            linearDamping:   12,   // Rapier passive damping — higher = stops faster
+            angularDamping:  8.0,
+            maxSpeed:        8,
+            boostSpeed:      16,
+            boostMultiplier: 1.6,
+        };
+
         this.createVehicle();
+
+        if (new URLSearchParams(window.location.search).get('debug') === '1') {
+            this._initDebugGUI();
+        }
     }
-    
+
     createVehicle() {
-        // dynamic type
         let rigidBodyDesc = RAPIER.RigidBodyDesc.dynamic()
             .setTranslation(0, 2, 0)
             .setAdditionalMass(200)
-            .setLinearDamping(8.0)
-            .setAngularDamping(8.0);
-        
+            .setLinearDamping(this.params.linearDamping)
+            .setAngularDamping(this.params.angularDamping)
+            .setDominanceGroup(127);
+
         this.rigidBody = this.world.createRigidBody(rigidBodyDesc);
-        
-        // Cuboid collider
-        // Rapier uses half-extents (0.75, 0.25, 1.0) for a 1.5 x 0.5 x 2.0 box
+
+        // Cuboid collider — half-extents (0.75, 0.25, 1.0) = 1.5 x 0.5 x 2.0 box
         let colliderDesc = RAPIER.ColliderDesc.cuboid(0.75, 0.25, 1.0);
         this.collider = this.world.createCollider(colliderDesc, this.rigidBody);
     }
-    
+
     getPosition() {
         if (!this.rigidBody) return { x: 0, y: 0, z: 0 };
         return this.rigidBody.translation();
     }
-    
+
     getQuaternion() {
         if (!this.rigidBody) return { x: 0, y: 0, z: 0, w: 1 };
         return this.rigidBody.rotation();
     }
-    
-    update(controls, delta) {
+
+    update(controls) {
         if (!this.rigidBody) return;
 
-        this.frameCount = (this.frameCount || 0) + 1;
-
         const position = this.rigidBody.translation();
-        const rotation = this.rigidBody.rotation(); // quaternion
+        const rotation = this.rigidBody.rotation();
         const velocity = this.rigidBody.linvel();
-        const angvel = this.rigidBody.angvel();
-        
-        // Calculate local forward direction from ship's rotation
-        // In Three.js, forward is typically (0, 0, -1)
+        const angvel   = this.rigidBody.angvel();
+
+        // Local forward direction
         const forward = new THREE.Vector3(0, 0, -1);
         const quat = new THREE.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
         forward.applyQuaternion(quat);
-        
-        // Horizontal speed (used for brake + clamp)
-        const speed = Math.sqrt(velocity.x ** 2 + velocity.z ** 2);
-        const maxSpeed = controls.keys.boost ? 16 : 8;
 
-        // Force tapers off as speed approaches max (car-like resistance)
+        const maxSpeed = controls.keys.boost ? this.params.boostSpeed : this.params.maxSpeed;
+        const speed = Math.sqrt(velocity.x ** 2 + velocity.z ** 2);
+
+        // Sync Rapier damping from GUI (takes effect next world.step())
+        this.rigidBody.setLinearDamping(this.params.linearDamping);
+        this.rigidBody.setAngularDamping(this.params.angularDamping);
+
+        // Force tapers off as speed approaches max
         const speedRatio = Math.min(speed / maxSpeed, 1);
-        const forceTaper = 1 - speedRatio * 0.85; // at max speed, only 15% force remains
-        const baseForceMagnitude = controls.keys.forward ? 200 : controls.keys.backward ? -120 : 0;
-        const boostMultiplier = controls.keys.boost && controls.keys.forward ? 1.6 : 1.0;
+        const forceTaper = 1 - speedRatio * 0.85;
+        const baseForceMagnitude = controls.keys.forward
+            ? this.params.forwardForce
+            : controls.keys.backward ? -this.params.backwardForce : 0;
+        const boostMultiplier = controls.keys.boost && controls.keys.forward ? this.params.boostMultiplier : 1.0;
         const finalForce = baseForceMagnitude * boostMultiplier * forceTaper;
 
-        // Apply movement force in local forward direction (horizontal only)
-        this.rigidBody.addForce({
-            x: forward.x * finalForce,
-            y: 0,
-            z: forward.z * finalForce
-        }, true);
+        this.rigidBody.addForce({ x: forward.x * finalForce, y: 0, z: forward.z * finalForce }, true);
 
-        // Brake (Space) — strong counter-force opposing current velocity
+        // Brake (Space)
         if (controls.keys.brake && speed > 0.3) {
             const brakeForce = 660;
             this.rigidBody.addForce({
@@ -82,16 +92,15 @@ export default class PhysicalVehicle {
             }, true);
         }
 
-        // Steering — reduces at high speed for stability
-        const steerStrength = 2.5 - speedRatio * 0.8; // 2.5 at rest, 1.7 at max speed
+        // Steering
+        const steerStrength = 2.5 - speedRatio * 0.8;
         let targetYAngVel = 0;
         const isTurning = controls.keys.left || controls.keys.right;
-        if (controls.keys.left) targetYAngVel = steerStrength;
+        if (controls.keys.left)  targetYAngVel =  steerStrength;
         if (controls.keys.right) targetYAngVel = -steerStrength;
 
-        // Turn friction — slows ship when steering for tighter control
         if (isTurning && speed > 0.5) {
-            const turnBrake = 200 * speedRatio; // stronger at higher speed
+            const turnBrake = 200 * speedRatio;
             this.rigidBody.addForce({
                 x: -velocity.x / speed * turnBrake,
                 y: 0,
@@ -99,32 +108,49 @@ export default class PhysicalVehicle {
             }, true);
         }
 
-        // Smoothly adjust angular velocity
-        const currentYAngVel = angvel.y;
-        const newYAngVel = currentYAngVel + (targetYAngVel - currentYAngVel) * 0.15;
+        const newYAngVel = angvel.y + (targetYAngVel - angvel.y) * 0.15;
         this.rigidBody.setAngvel({ x: 0, y: newYAngVel, z: 0 }, true);
 
-        // Hover spring with damping
+        // Hover spring
         const targetHeight = 2.0;
         if (position.y < targetHeight + 1.0) {
             const heightError = targetHeight - position.y;
-            const springForce = heightError * 460;
-            const dampForce = -velocity.y * 330;
-            const hoverForce = springForce + dampForce;
-
+            const hoverForce = heightError * 460 + (-velocity.y * 330);
             this.rigidBody.addForce({ x: 0, y: hoverForce, z: 0 }, true);
         }
+
+        // Speed clamp
         if (speed > maxSpeed) {
             const scale = maxSpeed / speed;
-            this.rigidBody.setLinvel({
-                x: velocity.x * scale,
-                y: velocity.y,
-                z: velocity.z * scale
-            }, true);
+            this.rigidBody.setLinvel({ x: velocity.x * scale, y: velocity.y, z: velocity.z * scale }, true);
         }
 
-        if (this.frameCount % 60 === 0) {
-            console.log(`Ship Physics: Height=${position.y.toFixed(2)} | Speed=${speed.toFixed(1)}`);
-        }
+    }
+
+    _initDebugGUI() {
+        import('https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm').then(({ default: GUI }) => {
+            const gui = new GUI({ title: 'Ship Physics  (?debug=1)' });
+            // Position on the LEFT so it doesn't overlap the WorldDressing scene editor (right side)
+            gui.domElement.style.position = 'fixed';
+            gui.domElement.style.top = '15px';
+            gui.domElement.style.left = '15px';
+            gui.domElement.style.right = 'auto';
+
+            gui.add(this.params, 'forwardForce',    10, 300,  5).name('Forward Force');
+            gui.add(this.params, 'backwardForce',   10, 300,  5).name('Backward Force');
+            gui.add(this.params, 'linearDamping',    1,  30,  0.5).name('Linear Damping (traction)');
+            gui.add(this.params, 'angularDamping',   1,  20,  0.5).name('Angular Damping (spin)');
+            gui.add(this.params, 'maxSpeed',         2,  20,  0.5).name('Max Speed');
+            gui.add(this.params, 'boostSpeed',       4,  40,  0.5).name('Boost Speed');
+            gui.add(this.params, 'boostMultiplier',  1,   4,  0.1).name('Boost Force ×');
+
+            gui.add({ reset: () => {
+                Object.assign(this.params, {
+                    forwardForce: 70, backwardForce: 90, linearDamping: 12,
+                    angularDamping: 8.0, maxSpeed: 8, boostSpeed: 16, boostMultiplier: 1.6,
+                });
+                gui.controllersRecursive().forEach(c => c.updateDisplay());
+            }}, 'reset').name('↺ Reset to defaults');
+        });
     }
 }
