@@ -1,3 +1,6 @@
+import { inject } from '@vercel/analytics';
+inject();
+
 import * as THREE from 'three';
 import Sizes from './Utils/Sizes.js';
 import Time from './Utils/Time.js';
