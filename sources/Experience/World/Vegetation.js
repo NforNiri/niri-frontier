@@ -20,46 +20,77 @@ export default class Vegetation {
     // ALIEN TREES — procedural twisted trunks + glowing canopies
     // =============================================
     createTrees() {
+        // Mars palette: ember/lava canopies, dark burnt trunks
+        const C = {
+            ember:   0xFF6600, lava:    0xFF4400, deepRed: 0xCC3300,
+            amber:   0xFF8833, magenta: 0xFF2D78, cyan:    0x00F0FF,
+            gold:    0xFFB800, rust:    0xFF5500,
+            trunk:   0x2A1200, trunkD:  0x1A0A00, trunkP:  0x1F0F00,
+        };
+
         const treePositions = [
             // Near ABOUT zone
-            { x: -20, z: -62, height: 6, canopyColor: 0x00FF88, trunkColor: 0x2A1A3A },
-            { x: 20, z: -72, height: 5, canopyColor: 0x44FFAA, trunkColor: 0x1F1530 },
-            { x: -25, z: -55, height: 4, canopyColor: 0x00FFCC, trunkColor: 0x2A1A3A },
+            { x: -20, z: -62, height: 6, canopyColor: C.ember,   trunkColor: C.trunk  },
+            { x: 20,  z: -72, height: 5, canopyColor: C.lava,    trunkColor: C.trunkD },
+            { x: -25, z: -55, height: 4, canopyColor: C.amber,   trunkColor: C.trunk  },
+            { x: -30, z: -68, height: 7, canopyColor: C.deepRed, trunkColor: C.trunkP },
+            { x: 25,  z: -60, height: 5, canopyColor: C.rust,    trunkColor: C.trunkD },
 
             // Near DEV zone
-            { x: 72, z: -18, height: 5, canopyColor: 0x88FF44, trunkColor: 0x1A2A1A },
-            { x: 48, z: -38, height: 7, canopyColor: 0x44FF88, trunkColor: 0x1A2A1A },
-            { x: 75, z: -35, height: 4, canopyColor: 0x66FF66, trunkColor: 0x1F2A1F },
+            { x: 72, z: -18, height: 5, canopyColor: C.amber,   trunkColor: C.trunk  },
+            { x: 48, z: -38, height: 7, canopyColor: C.ember,   trunkColor: C.trunkD },
+            { x: 75, z: -35, height: 4, canopyColor: C.lava,    trunkColor: C.trunkP },
+            { x: 78, z: -22, height: 6, canopyColor: C.gold,    trunkColor: C.trunk  },
+            { x: 52, z: -15, height: 5, canopyColor: C.rust,    trunkColor: C.trunkD },
 
             // Near GEN AI zone
-            { x: 42, z: 52, height: 6, canopyColor: 0xFFAA44, trunkColor: 0x2A1F1A },
-            { x: 68, z: 38, height: 5, canopyColor: 0xFF8844, trunkColor: 0x2A1F1A },
+            { x: 42, z: 52, height: 6, canopyColor: C.ember,   trunkColor: C.trunk  },
+            { x: 68, z: 38, height: 5, canopyColor: C.deepRed, trunkColor: C.trunkP },
+            { x: 72, z: 50, height: 7, canopyColor: C.amber,   trunkColor: C.trunkD },
+            { x: 45, z: 62, height: 4, canopyColor: C.lava,    trunkColor: C.trunk  },
 
             // Near CREATIVE zone
-            { x: -12, z: 82, height: 7, canopyColor: 0xFF44AA, trunkColor: 0x2A1A2A },
-            { x: 12, z: 85, height: 5, canopyColor: 0xFF66CC, trunkColor: 0x2A1A2A },
-            { x: -15, z: 72, height: 4, canopyColor: 0xFF88AA, trunkColor: 0x1F1520 },
+            { x: -12, z: 82, height: 7, canopyColor: C.magenta, trunkColor: C.trunk  },
+            { x: 12,  z: 85, height: 5, canopyColor: C.ember,   trunkColor: C.trunkD },
+            { x: -15, z: 72, height: 4, canopyColor: C.amber,   trunkColor: C.trunkP },
+            { x: 18,  z: 78, height: 6, canopyColor: C.lava,    trunkColor: C.trunk  },
 
             // Near CONTACT zone
-            { x: -60, z: 55, height: 6, canopyColor: 0x44FFFF, trunkColor: 0x1A2A2A },
-            { x: -42, z: 58, height: 5, canopyColor: 0x00FFCC, trunkColor: 0x1A2A2A },
+            { x: -60, z: 55, height: 6, canopyColor: C.cyan,    trunkColor: C.trunk  },
+            { x: -42, z: 58, height: 5, canopyColor: C.ember,   trunkColor: C.trunkD },
+            { x: -65, z: 42, height: 7, canopyColor: C.deepRed, trunkColor: C.trunkP },
 
             // Near RESUME zone
-            { x: -68, z: -48, height: 5, canopyColor: 0xFFCC44, trunkColor: 0x2A2A1A },
-            { x: -42, z: -48, height: 4, canopyColor: 0xFFAA22, trunkColor: 0x2A2A1A },
+            { x: -68, z: -48, height: 5, canopyColor: C.gold,    trunkColor: C.trunk  },
+            { x: -42, z: -48, height: 4, canopyColor: C.amber,   trunkColor: C.trunkD },
+            { x: -72, z: -38, height: 6, canopyColor: C.rust,    trunkColor: C.trunkP },
+            { x: -50, z: -55, height: 5, canopyColor: C.lava,    trunkColor: C.trunk  },
 
             // Along roads (scattered)
-            { x: -8, z: -30, height: 5, canopyColor: 0x00FF88, trunkColor: 0x2A1A3A },
-            { x: 20, z: 8, height: 6, canopyColor: 0x88FF44, trunkColor: 0x1A2A1A },
-            { x: -18, z: 22, height: 4, canopyColor: 0x44FFFF, trunkColor: 0x1A2A2A },
-            { x: 5, z: 35, height: 5, canopyColor: 0xFF66CC, trunkColor: 0x2A1A2A },
-            { x: -28, z: -8, height: 6, canopyColor: 0xFFCC44, trunkColor: 0x2A2A1A },
+            { x: -8,  z: -30, height: 5, canopyColor: C.ember,   trunkColor: C.trunk  },
+            { x: 20,  z: 8,   height: 6, canopyColor: C.amber,   trunkColor: C.trunkD },
+            { x: -18, z: 22,  height: 4, canopyColor: C.deepRed, trunkColor: C.trunkP },
+            { x: 5,   z: 35,  height: 5, canopyColor: C.lava,    trunkColor: C.trunk  },
+            { x: -28, z: -8,  height: 6, canopyColor: C.gold,    trunkColor: C.trunkD },
+            { x: 35,  z: -5,  height: 4, canopyColor: C.rust,    trunkColor: C.trunk  },
+            { x: -10, z: 55,  height: 5, canopyColor: C.ember,   trunkColor: C.trunkP },
+            { x: 30,  z: 45,  height: 6, canopyColor: C.amber,   trunkColor: C.trunkD },
+
+            // Mid-map fills (open empty areas)
+            { x: 25,  z: -50, height: 5, canopyColor: C.deepRed, trunkColor: C.trunk  },
+            { x: -35, z: 10,  height: 6, canopyColor: C.lava,    trunkColor: C.trunkD },
+            { x: 15,  z: 60,  height: 4, canopyColor: C.amber,   trunkColor: C.trunkP },
+            { x: -25, z: 40,  height: 7, canopyColor: C.ember,   trunkColor: C.trunk  },
+            { x: 50,  z: 15,  height: 5, canopyColor: C.gold,    trunkColor: C.trunkD },
+            { x: -45, z: -15, height: 6, canopyColor: C.rust,    trunkColor: C.trunk  },
 
             // World edges
-            { x: 85, z: 20, height: 8, canopyColor: 0x00FF88, trunkColor: 0x2A1A3A },
-            { x: -85, z: -20, height: 7, canopyColor: 0xFF44AA, trunkColor: 0x2A1A2A },
-            { x: 40, z: -70, height: 6, canopyColor: 0x44FF88, trunkColor: 0x1A2A1A },
-            { x: -30, z: 70, height: 5, canopyColor: 0x44FFFF, trunkColor: 0x1A2A2A },
+            { x: 85,  z: 20,  height: 8, canopyColor: C.ember,   trunkColor: C.trunk  },
+            { x: -85, z: -20, height: 7, canopyColor: C.lava,    trunkColor: C.trunkP },
+            { x: 40,  z: -70, height: 6, canopyColor: C.amber,   trunkColor: C.trunkD },
+            { x: -30, z: 70,  height: 5, canopyColor: C.deepRed, trunkColor: C.trunk  },
+            { x: -80, z: 30,  height: 7, canopyColor: C.rust,    trunkColor: C.trunkD },
+            { x: 82,  z: -50, height: 6, canopyColor: C.gold,    trunkColor: C.trunk  },
         ];
 
         for (const t of treePositions) {
@@ -117,7 +148,7 @@ export default class Vegetation {
     // ALIEN GRASS — instanced blades with wind shader
     // =============================================
     createGrass() {
-        const bladeCount = 500;
+        const bladeCount = 3500;
 
         // Blade geometry — tall thin triangle
         const bladeGeo = new THREE.BufferGeometry();
@@ -140,8 +171,8 @@ export default class Vegetation {
             uniforms: {
                 uTime: { value: 0 },
                 uWindStrength: { value: 0.3 },
-                uColor: { value: new THREE.Color(0x33FF99) },
-                uTipColor: { value: new THREE.Color(0x88FFCC) },
+                uColor: { value: new THREE.Color(0xAA3300) },
+                uTipColor: { value: new THREE.Color(0xFF6622) },
             },
             vertexShader: `
                 uniform float uTime;
@@ -219,30 +250,56 @@ export default class Vegetation {
     getGrassAreas() {
         return [
             // Near trees — dense patches
-            { x: -20, z: -62, radius: 8 },
-            { x: 20, z: -72, radius: 6 },
-            { x: 72, z: -18, radius: 6 },
-            { x: 42, z: 52, radius: 7 },
-            { x: -12, z: 82, radius: 8 },
-            { x: -60, z: 55, radius: 6 },
-            { x: -68, z: -48, radius: 6 },
+            { x: -20, z: -62, radius: 10 },
+            { x: 20,  z: -72, radius: 8  },
+            { x: -30, z: -68, radius: 7  },
+            { x: 72,  z: -18, radius: 8  },
+            { x: 48,  z: -38, radius: 7  },
+            { x: 78,  z: -22, radius: 6  },
+            { x: 42,  z: 52,  radius: 9  },
+            { x: 72,  z: 50,  radius: 7  },
+            { x: -12, z: 82,  radius: 10 },
+            { x: 18,  z: 78,  radius: 7  },
+            { x: -60, z: 55,  radius: 8  },
+            { x: -65, z: 42,  radius: 7  },
+            { x: -68, z: -48, radius: 8  },
+            { x: -50, z: -55, radius: 6  },
 
             // Along roads
-            { x: -5, z: -25, radius: 5 },
-            { x: 15, z: 10, radius: 5 },
-            { x: -15, z: 18, radius: 5 },
-            { x: 5, z: 40, radius: 5 },
-            { x: -25, z: -5, radius: 5 },
+            { x: -5,  z: -25, radius: 6 },
+            { x: 15,  z: 10,  radius: 6 },
+            { x: -22, z: 18,  radius: 5 }, // was (-15,18) — centered on CONTACT road
+            { x: 5,   z: 40,  radius: 6 },
+            { x: -25, z: -5,  radius: 6 },
+            { x: 35,  z: -5,  radius: 5 },
+            { x: -10, z: 55,  radius: 6 },
+            { x: 30,  z: 45,  radius: 5 },
 
-            // World edges — sparse
-            { x: 85, z: 20, radius: 10 },
-            { x: -85, z: -20, radius: 10 },
-            { x: 40, z: -70, radius: 8 },
-            { x: -30, z: 70, radius: 8 },
+            // Mid-map fills
+            { x: 25,  z: -50, radius: 8 },
+            { x: -35, z: 10,  radius: 8 },
+            { x: 15,  z: 60,  radius: 7 },
+            { x: -25, z: 40,  radius: 8 },
+            { x: 50,  z: 15,  radius: 7 },
+            { x: -45, z: -15, radius: 8 },
+            { x: 10,  z: -45, radius: 6 }, // was (0,-45) — centered on ABOUT road
+            { x: -20, z: 0,   radius: 6 },
+            { x: 40,  z: -10, radius: 6 },
 
-            // Spawn area — thin grass
-            { x: 8, z: 8, radius: 4 },
-            { x: -8, z: 8, radius: 4 },
+            // World edges — wide sparse sweeps
+            { x: 85,  z: 20,  radius: 14 },
+            { x: -85, z: -20, radius: 14 },
+            { x: 40,  z: -70, radius: 12 },
+            { x: -30, z: 70,  radius: 12 },
+            { x: -80, z: 30,  radius: 12 },
+            { x: 82,  z: -50, radius: 10 },
+            { x: 0,   z: 90,  radius: 12 },
+            { x: 0,   z: -90, radius: 10 },
+
+            // Spawn area
+            { x: 16,  z: 6,   radius: 5 }, // was (8,8) — on GEN AI road start
+            { x: -18, z: 5,   radius: 5 }, // was (-8,8) — on CONTACT road
+            { x: -8,  z: -22, radius: 5 }, // was (0,-15) — on ABOUT road
         ];
     }
 

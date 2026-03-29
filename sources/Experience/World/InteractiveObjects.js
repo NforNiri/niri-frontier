@@ -106,7 +106,7 @@ export default class InteractiveObjects {
             [-60, 2.5, 5],
             [35, 2.5, -50],
             [-35, 2.5, 60],
-            [0, 2.5, 0],
+            [10, 2.5, 5],   // was (0,0) — spawn hub, all 7 roads start here
             [-45, 2.5, -55],
         ];
 

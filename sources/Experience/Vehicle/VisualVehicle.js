@@ -16,6 +16,9 @@ export default class VisualVehicle {
         this.baseQuaternion = new THREE.Quaternion();
         this.frameCount = 0;
 
+        // Headlights
+        this.createHeadlights();
+
         // Particle system setup
         this.createParticles();
     }
@@ -168,6 +171,48 @@ export default class VisualVehicle {
         this.scene.add(this.container);
     }
 
+    createHeadlights() {
+        // Emissive lens disc shared geometry
+        const lensGeo = new THREE.CircleGeometry(0.12, 16);
+        const lensMat = new THREE.MeshStandardMaterial({
+            color: 0xFFEECC,
+            emissive: 0xFFEECC,
+            emissiveIntensity: 4.0,
+            transparent: true,
+            opacity: 0.95,
+            side: THREE.DoubleSide,
+        });
+
+        // Left lens — position at front-left of ship (adjust z to match model)
+        this.leftLens = new THREE.Mesh(lensGeo.clone(), lensMat.clone());
+        this.leftLens.position.set(-0.6, 0.15, -0.4);
+        this.leftLens.rotation.y = Math.PI; // face forward (-z)
+        this.container.add(this.leftLens);
+
+        // Right lens
+        this.rightLens = new THREE.Mesh(lensGeo.clone(), lensMat.clone());
+        this.rightLens.position.set(0.6, 0.15, -0.4);
+        this.rightLens.rotation.y = Math.PI;
+        this.container.add(this.rightLens);
+
+        // SpotLights — warm white beam, illuminates ~20 units ahead
+        this.leftSpot = new THREE.SpotLight(0xFFEECC, 12, 22, Math.PI * 0.10, 0.45, 1.5);
+        this.leftSpot.position.set(-0.55, 0.15, -1.2);
+        this.container.add(this.leftSpot);
+
+        this.rightSpot = new THREE.SpotLight(0xFFEECC, 12, 22, Math.PI * 0.10, 0.45, 1.5);
+        this.rightSpot.position.set(0.55, 0.15, -1.2);
+        this.container.add(this.rightSpot);
+
+        // SpotLight targets must be in the scene; we update their world position each frame
+        this.leftSpotTarget  = new THREE.Object3D();
+        this.rightSpotTarget = new THREE.Object3D();
+        this.scene.add(this.leftSpotTarget);
+        this.scene.add(this.rightSpotTarget);
+        this.leftSpot.target  = this.leftSpotTarget;
+        this.rightSpot.target = this.rightSpotTarget;
+    }
+
     createParticles() {
         // Engine trail particles
         this.particleCount = 100;
@@ -279,7 +324,16 @@ export default class VisualVehicle {
         
         const finalQuat = this.baseQuaternion.clone().multiply(this.targetTilt);
         this.container.quaternion.copy(finalQuat);
-        
+
+        // Update headlight targets — keep them 15 units ahead of the ship in world space
+        const headForward = new THREE.Vector3(0, 0, -15).applyQuaternion(finalQuat);
+        this.leftSpotTarget.position.set(
+            pos.x + headForward.x,
+            pos.y + headForward.y,
+            pos.z + headForward.z
+        );
+        this.rightSpotTarget.position.copy(this.leftSpotTarget.position);
+
         // Modulate all 3 engine lights and emissive planes
         const isMoving = controls.keys.forward || controls.keys.backward || controls.keys.left || controls.keys.right;
         const targetIntensity = isMoving ? (controls.keys.boost ? 6 : 3) : 0.5;
@@ -313,12 +367,6 @@ export default class VisualVehicle {
         // Update particle system
         this.updateParticles(this.time.delta);
 
-        // Console log position every 60 frames
         this.frameCount++;
-        if (this.frameCount % 60 === 0) {
-            const linvel = this.physicalVehicle.rigidBody.linvel();
-            const speed = Math.sqrt(linvel.x * linvel.x + linvel.y * linvel.y + linvel.z * linvel.z);
-            console.log(`Ship Position: x=${pos.x.toFixed(1)}, y=${pos.y.toFixed(1)}, z=${pos.z.toFixed(1)} | Speed: ${speed.toFixed(1)}`);
-        }
     }
 }

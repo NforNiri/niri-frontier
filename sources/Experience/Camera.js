@@ -38,7 +38,8 @@ export default class Camera {
         this.controls.draggingDampingFactor = 0.1;
         this.controls.minDistance = 5;
         this.controls.maxDistance = 100;
-        this.controls.setLookAt(0, 15, 30, 0, 0, 0); // initial position and look at origin
+        // Start at max zoom out — same angle as before (0,15,30) scaled to distance 100
+        this.controls.setLookAt(0, 45, 89, 0, 0, 0);
 
         this.cinematicMode = false;
     }
@@ -62,10 +63,14 @@ export default class Camera {
             this.controls.setLookAt(0, 12, 20, 0, 2, 0, true);
         }, 500);
 
-        // After flyover completes, switch to normal follow mode
+        // After flyover completes, pull back to max-zoom-out and hand off to follow mode
         setTimeout(() => {
-            this.controls.smoothTime = 0.2;
-            this.cinematicMode = false;
+            this.controls.smoothTime = 0.6;
+            this.controls.setLookAt(0, 45, 89, 0, 0, 0, true); // smooth pull-back to default zoom
+            setTimeout(() => {
+                this.controls.smoothTime = 0.2;
+                this.cinematicMode = false;
+            }, 1000);
         }, 3500);
     }
 
@@ -76,26 +81,10 @@ export default class Camera {
             return;
         }
 
-        // Vehicle tracking logic
+        // Vehicle tracking — pivot follows ship, zoom distance stays at whatever player set (default max)
         if (this.experience.world && this.experience.world.physicalVehicle) {
             const shipPos = this.experience.world.physicalVehicle.getPosition();
-            const shipQuat = this.experience.world.physicalVehicle.getQuaternion();
-            
-            // Player can orbit, but orbit center moves with ship
             this.controls.moveTo(shipPos.x, shipPos.y, shipPos.z, true);
-            
-            // If moving forward, smoothly adjust position behind vehicle
-            if (this.experience.controls.keys.forward) {
-                const q = new THREE.Quaternion(shipQuat.x, shipQuat.y, shipQuat.z, shipQuat.w);
-                const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(q);
-                
-                const idealPos = new THREE.Vector3(shipPos.x, shipPos.y, shipPos.z);
-                idealPos.add(forward.clone().multiplyScalar(-15));
-                idealPos.y += 8;
-                
-                // Set transition target position behind ship
-                this.controls.setPosition(idealPos.x, idealPos.y, idealPos.z, true);
-            }
         }
 
         // Delta time is in milliseconds from Time class, camera-controls needs seconds

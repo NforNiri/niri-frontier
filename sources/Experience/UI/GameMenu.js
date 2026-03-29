@@ -242,8 +242,19 @@ export default class GameMenu {
             const zoneData = world.zones.zoneData;
             const zone = zoneData.find(z => z.id === zoneId);
             if (!zone) return;
-            // Teleport slightly outside the zone radius so the panel triggers on entry
-            targetPos = { x: zone.position.x, y: 2, z: zone.position.z + 5 };
+            // Land just outside the zone radius on the approach path from spawn (0,0).
+            // This keeps the ship on open road, away from structures built around zone centers.
+            const dx = 0 - zone.position.x;
+            const dz = 0 - zone.position.z;
+            const len = Math.sqrt(dx * dx + dz * dz);
+            const ux = dx / len;
+            const uz = dz / len;
+            const dist = zone.radius + 3;
+            targetPos = {
+                x: zone.position.x + ux * dist,
+                y: 2,
+                z: zone.position.z + uz * dist,
+            };
         }
 
         const rb = world.physicalVehicle.rigidBody;
