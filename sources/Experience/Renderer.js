@@ -33,7 +33,9 @@ export default class Renderer {
      * Auto-detect quality based on device capabilities
      */
     detectQuality() {
-        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 768;
+        const isMobile = navigator.maxTouchPoints > 1 ||
+            /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+            window.innerWidth < 1024;
         const pixelRatio = window.devicePixelRatio;
         const canvas = document.createElement('canvas');
         const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
@@ -181,7 +183,7 @@ export default class Renderer {
             this.instance.setPixelRatio(1);
             if (this.composer) this.composer.setPixelRatio(1);
         } else {
-            const pr = Math.min(window.devicePixelRatio, 2);
+            const pr = Math.min(window.devicePixelRatio, 1.5);
             this.instance.setPixelRatio(pr);
             if (this.composer) this.composer.setPixelRatio(pr);
         }

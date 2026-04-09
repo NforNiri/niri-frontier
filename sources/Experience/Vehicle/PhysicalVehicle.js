@@ -19,6 +19,10 @@ export default class PhysicalVehicle {
             boostMultiplier: 1.6,
         };
 
+        // Pre-allocated scratch objects to avoid per-frame GC allocations
+        this._scratchForward = new THREE.Vector3();
+        this._scratchQuat = new THREE.Quaternion();
+
         this.createVehicle();
 
         if (new URLSearchParams(window.location.search).get('debug') === '1') {
@@ -59,9 +63,9 @@ export default class PhysicalVehicle {
         const velocity = this.rigidBody.linvel();
         const angvel   = this.rigidBody.angvel();
 
-        // Local forward direction
-        const forward = new THREE.Vector3(0, 0, -1);
-        const quat = new THREE.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
+        // Local forward direction (reuse scratch objects)
+        const forward = this._scratchForward.set(0, 0, -1);
+        const quat = this._scratchQuat.set(rotation.x, rotation.y, rotation.z, rotation.w);
         forward.applyQuaternion(quat);
 
         const maxSpeed = controls.keys.boost ? this.params.boostSpeed : this.params.maxSpeed;

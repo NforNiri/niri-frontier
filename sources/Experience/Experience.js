@@ -61,10 +61,12 @@ export default class Experience {
             this.world = new World();
         });
 
-        // Dev Stats
-        this.stats = new StatsGL({
-            container: document.body
-        });
+        // Dev Stats — only in development
+        if (import.meta.env?.DEV) {
+            this.stats = new StatsGL({
+                container: document.body
+            });
+        }
         
         // Start Loop
         this.update = this.update.bind(this);

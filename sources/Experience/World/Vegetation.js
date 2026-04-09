@@ -135,7 +135,7 @@ export default class Vegetation {
                 height + (Math.random() - 0.3) * 1.5,
                 (Math.random() - 0.5) * 1.5
             );
-            canopy.castShadow = true;
+            canopy.castShadow = false; // ME-5: removed — saves 135 shadow depth pass objects
             group.add(canopy);
             canopies.push(canopy);
         }
@@ -148,7 +148,8 @@ export default class Vegetation {
     // ALIEN GRASS — instanced blades with wind shader
     // =============================================
     createGrass() {
-        const bladeCount = 3500;
+        // ME-6: Reduce grass on mobile — 57% fewer vertex shader invocations, invisible at distance
+        const bladeCount = this.experience.renderer.quality === 'low' ? 1500 : 3500;
 
         // Blade geometry — tall thin triangle
         const bladeGeo = new THREE.BufferGeometry();
@@ -312,17 +313,11 @@ export default class Vegetation {
             this.grassMesh.material.uniforms.uTime.value = t;
         }
 
-        // Sway tree canopies
+        // Sway tree groups (ME-5: rotation instead of per-canopy position mutation)
+        // 1 dirty flag per tree instead of ~3 per canopy (45/frame instead of 135/frame)
         for (const tree of this.trees) {
-            const sway = Math.sin(t * 1.2 + tree.phase) * 0.08;
-            const swayZ = Math.cos(t * 0.9 + tree.phase * 1.3) * 0.05;
-            for (const canopy of tree.canopies) {
-                canopy.position.x += sway * 0.02;
-                canopy.position.z += swayZ * 0.02;
-                // Slowly return to center to prevent drift
-                canopy.position.x *= 0.998;
-                canopy.position.z *= 0.998;
-            }
+            const sway = Math.sin(t * 1.2 + tree.phase) * 0.04;
+            tree.group.rotation.z = sway;
         }
     }
 }

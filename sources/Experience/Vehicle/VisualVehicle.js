@@ -16,6 +16,17 @@ export default class VisualVehicle {
         this.baseQuaternion = new THREE.Quaternion();
         this.frameCount = 0;
 
+        // Pre-allocated scratch objects to avoid per-frame GC allocations
+        this._scratchTiltEuler = new THREE.Euler();
+        this._scratchTiltQuat = new THREE.Quaternion();
+        this._scratchFinalQuat = new THREE.Quaternion();
+        this._scratchHeadForward = new THREE.Vector3();
+        this._scratchBackward = new THREE.Vector3();
+        this._scratchLeftPos = new THREE.Vector3();
+        this._scratchRightPos = new THREE.Vector3();
+        this._scratchCenterPos = new THREE.Vector3();
+        this._scratchVelocity = new THREE.Vector3();
+
         // Headlights
         this.createHeadlights();
 
@@ -195,22 +206,28 @@ export default class VisualVehicle {
         this.rightLens.rotation.y = Math.PI;
         this.container.add(this.rightLens);
 
-        // SpotLights — warm white beam, illuminates ~20 units ahead
-        this.leftSpot = new THREE.SpotLight(0xFFEECC, 12, 22, Math.PI * 0.10, 0.45, 1.5);
-        this.leftSpot.position.set(-0.55, 0.15, -1.2);
-        this.container.add(this.leftSpot);
+        // SpotLights — only on high quality (most expensive light type)
+        // On mobile, the emissive lens discs already give the headlight glow visually
+        if (this.experience.renderer.quality === 'high') {
+            this.leftSpot = new THREE.SpotLight(0xFFEECC, 12, 22, Math.PI * 0.10, 0.45, 1.5);
+            this.leftSpot.position.set(-0.55, 0.15, -1.2);
+            this.container.add(this.leftSpot);
 
-        this.rightSpot = new THREE.SpotLight(0xFFEECC, 12, 22, Math.PI * 0.10, 0.45, 1.5);
-        this.rightSpot.position.set(0.55, 0.15, -1.2);
-        this.container.add(this.rightSpot);
+            this.rightSpot = new THREE.SpotLight(0xFFEECC, 12, 22, Math.PI * 0.10, 0.45, 1.5);
+            this.rightSpot.position.set(0.55, 0.15, -1.2);
+            this.container.add(this.rightSpot);
 
-        // SpotLight targets must be in the scene; we update their world position each frame
-        this.leftSpotTarget  = new THREE.Object3D();
-        this.rightSpotTarget = new THREE.Object3D();
-        this.scene.add(this.leftSpotTarget);
-        this.scene.add(this.rightSpotTarget);
-        this.leftSpot.target  = this.leftSpotTarget;
-        this.rightSpot.target = this.rightSpotTarget;
+            // SpotLight targets must be in the scene; we update their world position each frame
+            this.leftSpotTarget  = new THREE.Object3D();
+            this.rightSpotTarget = new THREE.Object3D();
+            this.scene.add(this.leftSpotTarget);
+            this.scene.add(this.rightSpotTarget);
+            this.leftSpot.target  = this.leftSpotTarget;
+            this.rightSpot.target = this.rightSpotTarget;
+        } else {
+            this.leftSpot = null;
+            this.rightSpot = null;
+        }
     }
 
     createParticles() {
@@ -281,8 +298,9 @@ export default class VisualVehicle {
             const particle = this.particles[i];
 
             if (particle.life > 0) {
-                // Update particle
-                particle.position.add(particle.velocity.clone().multiplyScalar(delta / 1000));
+                // Update particle (reuse scratch velocity)
+                this._scratchVelocity.copy(particle.velocity).multiplyScalar(delta / 1000);
+                particle.position.add(this._scratchVelocity);
                 particle.life -= delta / 1000;
 
                 // Set position
@@ -310,7 +328,7 @@ export default class VisualVehicle {
         this.container.position.set(pos.x, pos.y, pos.z);
         this.baseQuaternion.set(quat.x, quat.y, quat.z, quat.w);
         
-        // Tilt visual logic
+        // Tilt visual logic (reuse scratch objects)
         let pitch = 0;
         let roll = 0;
         
@@ -319,20 +337,22 @@ export default class VisualVehicle {
         if (controls.keys.left) roll = 0.25; // roll left
         if (controls.keys.right) roll = -0.25;
         
-        const tiltQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch, 0, roll, 'YXZ'));
+        const tiltQuat = this._scratchTiltQuat.setFromEuler(this._scratchTiltEuler.set(pitch, 0, roll, 'YXZ'));
         this.targetTilt.slerp(tiltQuat, 0.1); // smooth transition
         
-        const finalQuat = this.baseQuaternion.clone().multiply(this.targetTilt);
+        const finalQuat = this._scratchFinalQuat.copy(this.baseQuaternion).multiply(this.targetTilt);
         this.container.quaternion.copy(finalQuat);
 
         // Update headlight targets — keep them 15 units ahead of the ship in world space
-        const headForward = new THREE.Vector3(0, 0, -15).applyQuaternion(finalQuat);
-        this.leftSpotTarget.position.set(
-            pos.x + headForward.x,
-            pos.y + headForward.y,
-            pos.z + headForward.z
-        );
-        this.rightSpotTarget.position.copy(this.leftSpotTarget.position);
+        if (this.leftSpot) {
+            const headForward = this._scratchHeadForward.set(0, 0, -15).applyQuaternion(finalQuat);
+            this.leftSpotTarget.position.set(
+                pos.x + headForward.x,
+                pos.y + headForward.y,
+                pos.z + headForward.z
+            );
+            this.rightSpotTarget.position.copy(this.leftSpotTarget.position);
+        }
 
         // Modulate all 3 engine lights and emissive planes
         const isMoving = controls.keys.forward || controls.keys.backward || controls.keys.left || controls.keys.right;
@@ -344,24 +364,21 @@ export default class VisualVehicle {
             engine.plane.material.emissiveIntensity += (targetEmissive - engine.plane.material.emissiveIntensity) * 0.1;
         }
 
-        // Emit engine particles when moving
+        // Emit engine particles when moving (reuse scratch position vectors)
         if (isMoving && this.frameCount % 2 === 0) {
-            const leftEnginePos = new THREE.Vector3();
-            const rightEnginePos = new THREE.Vector3();
-            const centerEnginePos = new THREE.Vector3();
-            this.leftGlow.getWorldPosition(leftEnginePos);
-            this.rightGlow.getWorldPosition(rightEnginePos);
-            this.centerGlow.getWorldPosition(centerEnginePos);
+            this.leftGlow.getWorldPosition(this._scratchLeftPos);
+            this.rightGlow.getWorldPosition(this._scratchRightPos);
+            this.centerGlow.getWorldPosition(this._scratchCenterPos);
 
             // Backward velocity relative to ship
-            const backward = new THREE.Vector3(0, 0, 1);
+            const backward = this._scratchBackward.set(0, 0, 1);
             backward.applyQuaternion(finalQuat);
             backward.multiplyScalar(controls.keys.boost ? -8 : -5);
             backward.y -= 1;
 
-            this.emitParticle(leftEnginePos, backward.clone());
-            this.emitParticle(rightEnginePos, backward.clone());
-            this.emitParticle(centerEnginePos, backward.clone());
+            this.emitParticle(this._scratchLeftPos, backward);
+            this.emitParticle(this._scratchRightPos, backward);
+            this.emitParticle(this._scratchCenterPos, backward);
         }
 
         // Update particle system

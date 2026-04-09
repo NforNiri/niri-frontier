@@ -126,8 +126,12 @@ export default class InteractiveObjects {
             const sphere = new THREE.Mesh(geometry.clone(), material.clone());
             group.add(sphere);
 
-            const light = new THREE.PointLight(0x39FF14, 2, 8);
-            group.add(light);
+            // PointLight only on high quality — emissive sphere already glows on mobile
+            let light = null;
+            if (this.experience.renderer.quality === 'high') {
+                light = new THREE.PointLight(0x39FF14, 2, 8);
+                group.add(light);
+            }
 
             this.scene.add(group);
 

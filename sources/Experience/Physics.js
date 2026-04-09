@@ -22,6 +22,11 @@ export default class Physics extends EventEmitter {
         const gravity = { x: 0.0, y: -5.0, z: 0.0 };
         this.world = new RAPIER.World(gravity);
 
+        // Fixed-step accumulator — ensures physics runs at 60Hz regardless of display refresh rate
+        // Fixes 120Hz devices (ProMotion iPhones) running physics at 2× speed
+        this._accumulator = 0;
+        this._fixedStep = 1000 / 60; // 16.67ms
+
         // Ground collider
         this.createGround();
 
@@ -54,7 +59,15 @@ export default class Physics extends EventEmitter {
     step() {
         if (!this.world) return;
 
-        // Fixed timestep stepping
-        this.world.step();
+        // Fixed timestep stepping — accumulate real time, step at fixed 60Hz
+        // Cap at 2 steps per frame to prevent spiral of death on slow frames
+        const delta = this.experience.time.delta;
+        this._accumulator += delta;
+        let steps = 0;
+        while (this._accumulator >= this._fixedStep && steps < 2) {
+            this.world.step();
+            this._accumulator -= this._fixedStep;
+            steps++;
+        }
     }
 }

@@ -81,11 +81,8 @@ export default class WorldDressing {
             if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
-                if (Array.isArray(child.material)) {
-                    child.material = child.material.map(m => m.clone());
-                } else if (child.material) {
-                    child.material = child.material.clone();
-                }
+                // DO NOT clone materials — share originals for static props
+                // This allows Three.js to batch draw calls (~300 → ~42 unique materials)
             }
         });
         return clone;
