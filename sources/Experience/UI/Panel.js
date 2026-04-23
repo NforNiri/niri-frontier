@@ -43,6 +43,7 @@ export default class Panel {
 
         this.element.style.display = 'flex';
         this.isVisible = true;
+        document.body.classList.add('panel-open');
 
         if (this.experience.audio) this.experience.audio.playPanelOpen();
 
@@ -77,6 +78,7 @@ export default class Panel {
             onComplete: () => {
                 this.element.style.display = 'none';
                 this.currentZone = null;
+                document.body.classList.remove('panel-open');
             },
         });
     }

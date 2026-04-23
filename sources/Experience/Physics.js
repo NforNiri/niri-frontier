@@ -61,7 +61,8 @@ export default class Physics extends EventEmitter {
 
         // Fixed timestep stepping — accumulate real time, step at fixed 60Hz
         // Cap at 2 steps per frame to prevent spiral of death on slow frames
-        const delta = this.experience.time.delta;
+        // Cap delta to 100ms to prevent cold-start lurch (first RAF can be 200-500ms)
+        const delta = Math.min(this.experience.time.delta, 100);
         this._accumulator += delta;
         let steps = 0;
         while (this._accumulator >= this._fixedStep && steps < 2) {

@@ -133,7 +133,7 @@ export default class Renderer {
         style.textContent = `
             #quality-toggle {
                 position: fixed;
-                top: 12px;
+                bottom: 12px;
                 right: 12px;
                 z-index: 200;
                 background: rgba(10, 14, 26, 0.7);
@@ -153,6 +153,12 @@ export default class Renderer {
                 border-color: rgba(0, 240, 255, 0.8);
                 box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
             }
+            /* On mobile, lift above the two action buttons (2 × 70px + 12px gap + 20px padding + 10px) */
+            @media (max-width: 1023px), (pointer: coarse) {
+                #quality-toggle {
+                    bottom: 185px;
+                }
+            }
         `;
         document.head.appendChild(style);
 
@@ -163,6 +169,64 @@ export default class Renderer {
         window.addEventListener('keydown', (e) => {
             if (e.code === 'KeyH') this.toggleQuality();
         });
+
+        this.createControlsHint();
+    }
+
+    createControlsHint() {
+        const hint = document.createElement('div');
+        hint.id = 'controls-hint';
+        hint.innerHTML = `
+            <div class="hint-row"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> <span>Move</span></div>
+            <div class="hint-row"><kbd>Shift</kbd> <span>Boost</span></div>
+            <div class="hint-row"><kbd>Space</kbd> <span>Brake</span></div>
+        `;
+        document.body.appendChild(hint);
+
+        const style = document.createElement('style');
+        style.textContent = `
+            #controls-hint {
+                position: fixed;
+                bottom: 16px;
+                left: 16px;
+                z-index: 150;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                pointer-events: none;
+                opacity: 0.5;
+                transition: opacity 0.3s ease;
+            }
+            #controls-hint:hover { opacity: 0.85; }
+            .hint-row {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+            #controls-hint kbd {
+                font-family: 'Orbitron', sans-serif;
+                font-size: 9px;
+                padding: 2px 6px;
+                background: rgba(10, 14, 26, 0.75);
+                border: 1px solid rgba(0, 240, 255, 0.35);
+                border-radius: 4px;
+                color: #00F0FF;
+                letter-spacing: 0.5px;
+                backdrop-filter: blur(3px);
+            }
+            #controls-hint span {
+                font-family: 'Orbitron', sans-serif;
+                font-size: 9px;
+                color: rgba(0, 240, 255, 0.5);
+                letter-spacing: 1px;
+                margin-left: 2px;
+            }
+            /* Hide on mobile / touch devices */
+            @media (max-width: 1023px), (pointer: coarse) {
+                #controls-hint { display: none; }
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     toggleQuality() {

@@ -95,8 +95,8 @@ export default class World {
         geometry.rotateX(-Math.PI / 2);
 
         const material = new THREE.MeshStandardMaterial({
-            color: 0x151A2E,
-            roughness: 0.9,
+            color: 0xB8924A,
+            roughness: 0.95,
         });
 
         this.ground = new THREE.Mesh(geometry, material);

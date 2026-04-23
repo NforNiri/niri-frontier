@@ -893,3 +893,12 @@ kbd {
         height: 100vh;
     }
 }
+
+/* ── Panel open: hide overlapping UI chrome ─────────────────── */
+body.panel-open #quality-toggle {
+    display: none;
+}
+body.panel-open #menu-btn {
+    visibility: hidden;
+    pointer-events: none;
+}

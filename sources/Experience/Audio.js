@@ -6,9 +6,11 @@ export default class Audio {
         this.experience = Experience.getInstance();
         this.resources = this.experience.resources;
 
-        this.muted = true;
+        this.musicMuted = true;   // music off by default
+        this.sfxMuted = true;     // sound effects off by default
         this.started = false;
         this.sounds = {};
+        this.musicSounds = ['ambient']; // keys treated as music
 
         this.createSounds();
         console.log('✅ Audio initialized');
@@ -59,20 +61,28 @@ export default class Audio {
     start() {
         if (this.started) return;
         this.started = true;
-        this.muted = false;
 
-        Howler.mute(false);
+        // Music starts muted (user must enable)
+        if (this.sounds.ambient) {
+            this.sounds.ambient.mute(this.musicMuted);
+            this.sounds.ambient.play();
+        }
 
-        // Start loops
-        if (this.sounds.ambient) this.sounds.ambient.play();
-        if (this.sounds.engineIdle) this.sounds.engineIdle.play();
-        if (this.sounds.engineThrust) this.sounds.engineThrust.play();
+        // SFX loops start unmuted
+        if (this.sounds.engineIdle) {
+            this.sounds.engineIdle.mute(this.sfxMuted);
+            this.sounds.engineIdle.play();
+        }
+        if (this.sounds.engineThrust) {
+            this.sounds.engineThrust.mute(this.sfxMuted);
+            this.sounds.engineThrust.play();
+        }
 
-        console.log('🔊 Audio started');
+        console.log('🔊 Audio started (music:', this.musicMuted ? 'off' : 'on', '| sfx:', this.sfxMuted ? 'off' : 'on', ')');
     }
 
     updateEngine(speed, isBoosting) {
-        if (!this.started) return;
+        if (!this.started || this.sfxMuted) return;
 
         const maxSpeed = isBoosting ? 16 : 8;
         const speedRatio = Math.min(speed / maxSpeed, 1);
@@ -94,34 +104,40 @@ export default class Audio {
         }
     }
 
-    playBoost() {
-        if (this.sounds.boost && this.started) this.sounds.boost.play();
+    playSFX(key) {
+        if (!this.started || this.sfxMuted) return;
+        if (this.sounds[key]) this.sounds[key].play();
     }
 
-    playBrake() {
-        if (this.sounds.brake && this.started) this.sounds.brake.play();
+    playBoost()     { this.playSFX('boost'); }
+    playBrake()     { this.playSFX('brake'); }
+    playZoneEnter() { this.playSFX('zoneEnter'); }
+    playZoneExit()  { this.playSFX('zoneExit'); }
+    playUIClick()   { this.playSFX('uiClick'); }
+    playPanelOpen() { this.playSFX('panelOpen'); }
+
+    toggleMusic() {
+        this.musicMuted = !this.musicMuted;
+        if (this.sounds.ambient) this.sounds.ambient.mute(this.musicMuted);
+        console.log(this.musicMuted ? '🔇 Music off' : '🎵 Music on');
     }
 
-    playZoneEnter() {
-        if (this.sounds.zoneEnter && this.started) this.sounds.zoneEnter.play();
+    toggleSFX() {
+        this.sfxMuted = !this.sfxMuted;
+        // Apply to running SFX loops
+        if (this.sounds.engineIdle)   this.sounds.engineIdle.mute(this.sfxMuted);
+        if (this.sounds.engineThrust) this.sounds.engineThrust.mute(this.sfxMuted);
+        console.log(this.sfxMuted ? '🔇 SFX off' : '🔊 SFX on');
     }
 
-    playZoneExit() {
-        if (this.sounds.zoneExit && this.started) this.sounds.zoneExit.play();
-    }
-
-    playUIClick() {
-        if (this.sounds.uiClick && this.started) this.sounds.uiClick.play();
-    }
-
-    playPanelOpen() {
-        if (this.sounds.panelOpen && this.started) this.sounds.panelOpen.play();
-    }
-
+    // Legacy — kept so any old callers don't break; toggles both
     toggleMute() {
-        this.muted = !this.muted;
-        Howler.mute(this.muted);
-        console.log(this.muted ? '🔇 Audio muted' : '🔊 Audio unmuted');
+        const newState = !(this.musicMuted && this.sfxMuted);
+        this.musicMuted = newState;
+        this.sfxMuted = newState;
+        if (this.sounds.ambient) this.sounds.ambient.mute(this.musicMuted);
+        if (this.sounds.engineIdle)   this.sounds.engineIdle.mute(this.sfxMuted);
+        if (this.sounds.engineThrust) this.sounds.engineThrust.mute(this.sfxMuted);
     }
 
     update(speed, isBoosting) {

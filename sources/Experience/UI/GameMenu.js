@@ -86,8 +86,12 @@ export default class GameMenu {
                             <button class="settings-btn" id="menu-quality-btn">✨ HIGH</button>
                         </div>
                         <div class="settings-row">
-                            <span class="settings-label">Audio</span>
-                            <button class="settings-btn" id="menu-audio-btn">🔊 ON</button>
+                            <span class="settings-label">Music</span>
+                            <button class="settings-btn" id="menu-music-btn">🔇 OFF</button>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">SFX</span>
+                            <button class="settings-btn" id="menu-sfx-btn">🔇 OFF</button>
                         </div>
                     </div>
 
@@ -158,11 +162,20 @@ export default class GameMenu {
             }
         });
 
-        // Audio toggle
-        const audioBtn = this.overlay.querySelector('#menu-audio-btn');
-        audioBtn.addEventListener('click', () => {
+        // Music toggle
+        const musicBtn = this.overlay.querySelector('#menu-music-btn');
+        musicBtn.addEventListener('click', () => {
             if (this.experience.audio) {
-                this.experience.audio.toggleMute();
+                this.experience.audio.toggleMusic();
+                this.updateSettingsDisplay();
+            }
+        });
+
+        // SFX toggle
+        const sfxBtn = this.overlay.querySelector('#menu-sfx-btn');
+        sfxBtn.addEventListener('click', () => {
+            if (this.experience.audio) {
+                this.experience.audio.toggleSFX();
                 this.updateSettingsDisplay();
             }
         });
@@ -217,13 +230,15 @@ export default class GameMenu {
 
     updateSettingsDisplay() {
         const qualityBtn = this.overlay.querySelector('#menu-quality-btn');
-        const audioBtn = this.overlay.querySelector('#menu-audio-btn');
+        const musicBtn   = this.overlay.querySelector('#menu-music-btn');
+        const sfxBtn     = this.overlay.querySelector('#menu-sfx-btn');
 
         if (this.experience.renderer) {
             qualityBtn.textContent = this.experience.renderer.quality === 'high' ? '✨ HIGH' : '⚡ LOW';
         }
         if (this.experience.audio) {
-            audioBtn.textContent = this.experience.audio.muted ? '🔇 OFF' : '🔊 ON';
+            musicBtn.textContent = this.experience.audio.musicMuted ? '🔇 OFF' : '🎵 ON';
+            sfxBtn.textContent   = this.experience.audio.sfxMuted   ? '🔇 OFF' : '🔊 ON';
         }
     }
 
@@ -249,7 +264,7 @@ export default class GameMenu {
             const len = Math.sqrt(dx * dx + dz * dz);
             const ux = dx / len;
             const uz = dz / len;
-            const dist = zone.radius + 3;
+            const dist = zone.radius - 4;
             targetPos = {
                 x: zone.position.x + ux * dist,
                 y: 2,

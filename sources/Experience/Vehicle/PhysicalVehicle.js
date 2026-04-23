@@ -10,7 +10,7 @@ export default class PhysicalVehicle {
         this.world = this.physics.world;
 
         this.params = {
-            forwardForce:    70,   // confirmed good
+            forwardForce:    90,   // confirmed good
             backwardForce:   90,   // confirmed good
             linearDamping:   12,   // Rapier passive damping — higher = stops faster
             angularDamping:  8.0,

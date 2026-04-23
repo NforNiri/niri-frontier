@@ -626,6 +626,21 @@ When you're ready to start, here's exactly what to do:
 
 ---
 
+## Progress Tracker
+
+| Phase | Status | Notes |
+|---|---|---|
+| Phase 0 — Foundation | ✅ COMPLETE | Rapier physics, hover vehicle, camera, star environment, Vite + Vercel |
+| Phase 1 — World & Ship | ✅ COMPLETE | Kenney Space Kit OBJ models, WorldDressing, NeonRoad, NeonLights, Vegetation |
+| Phase 2 — Content & Panels | ✅ COMPLETE | 7 zones (About, Dev, Gen AI, Creative, Contact, Resume, BTS), all panels, UI system |
+| Phase 3 — Polish | ✅ COMPLETE | Loading screen, Howler.js audio, interactive physics objects, collectible orbs, mobile touch controls, quality toggle, game menu |
+| Phase 4 — Post-MVP | 🔲 FUTURE | See roadmap below |
+
+**Last committed:** `3c727cb` — Phase 3 complete + world redesign
+**Branch:** `main` — pushed to GitHub
+
+---
+
 ## Success Metrics
 
 How you'll know each phase is done:

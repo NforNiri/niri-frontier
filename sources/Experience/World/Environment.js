@@ -10,8 +10,8 @@ export default class Environment {
         this.scene = this.experience.scene;
         this.time = this.experience.time;
 
-        this.scene.background = new THREE.Color(0x1A0800);
-        this.scene.fog = new THREE.Fog(0x3D1500, 60, 180);
+        this.scene.background = new THREE.Color(0x080E1E);
+        this.scene.fog = new THREE.Fog(0x080E1E, 60, 200);
 
         this.setSunlight();
         this.setAmbientLight();
@@ -22,8 +22,8 @@ export default class Environment {
     }
 
     setSunlight() {
-        // Primary directional — warm mars sun from above-right
-        this.sunLight = new THREE.DirectionalLight(0xFF8844, 2.5);
+        // Primary directional — bright desert sun
+        this.sunLight = new THREE.DirectionalLight(0xFFD09A, 2.8);
         this.sunLight.castShadow = true;
         this.sunLight.shadow.mapSize.width = 2048;
         this.sunLight.shadow.mapSize.height = 2048;
@@ -36,8 +36,8 @@ export default class Environment {
         this.sunLight.position.set(20, 40, 20);
         this.scene.add(this.sunLight);
 
-        // Secondary fill light — deep amber from opposite side
-        this.fillLight = new THREE.DirectionalLight(0xCC4400, 0.6);
+        // Secondary fill light — warm sand bounce from opposite side
+        this.fillLight = new THREE.DirectionalLight(0xFFAA55, 0.3);
         this.fillLight.position.set(-15, 10, -15);
         this.scene.add(this.fillLight);
 
@@ -48,12 +48,12 @@ export default class Environment {
     }
 
     setAmbientLight() {
-        // Overall ambient — warm tint so Mars feel comes through
-        this.ambientLight = new THREE.AmbientLight(0x553322, 1.0);
+        // Overall ambient — warm sandy tint
+        this.ambientLight = new THREE.AmbientLight(0x887755, 0.75);
         this.scene.add(this.ambientLight);
 
-        // Hemisphere — dusty orange sky from above, dark red ground from below
-        this.hemisphereLight = new THREE.HemisphereLight(0xFF6633, 0x3D1500, 0.5);
+        // Hemisphere — hazy tan sky from above, warm sand ground from below
+        this.hemisphereLight = new THREE.HemisphereLight(0xFFCC88, 0xC49A45, 0.45);
         this.scene.add(this.hemisphereLight);
     }
 
@@ -123,7 +123,7 @@ export default class Environment {
         // Full day/night cycle over 5 minutes.
         // Start offset +90 000 ms puts t≈0.30 at launch — post-sunrise golden morning.
         const cycleDuration = 300000;
-        const t = ((this.time.elapsed + 90000) % cycleDuration) / cycleDuration;
+        const t = (this.time.elapsed % cycleDuration) / cycleDuration;
 
         // sunElevation: -1 at midnight, 0 at sunrise/sunset, +1 at noon
         const sunElevation = Math.sin((t - 0.25) * Math.PI * 2);
@@ -142,12 +142,12 @@ export default class Environment {
             Math.max(2, sunAbove * 50),
             Math.sin(lateralAngle) * -15
         );
-        this.sunLight.intensity = sunAbove * sunAbove * 3.5;
-        // Deep orange at horizon → pale warm orange at noon
+        this.sunLight.intensity = sunAbove * sunAbove * 2.6;
+        // Warm amber at horizon → soft warm gold at noon
         this.sunLight.color.setRGB(
             1.0,
-            THREE.MathUtils.lerp(0.38, 0.70, dayFactor),
-            THREE.MathUtils.lerp(0.10, 0.45, dayFactor)
+            THREE.MathUtils.lerp(0.55, 0.78, dayFactor),
+            THREE.MathUtils.lerp(0.20, 0.48, dayFactor)
         );
 
         // ── Moonlight (inverse of sun — fades in as sun sets) ────────────
@@ -158,33 +158,33 @@ export default class Environment {
 
         // ── Ambient ──────────────────────────────────────────────────────
         // Night floor raised to 0.38 with a blue-silver tint (moonlit feel)
-        this.ambientLight.intensity = THREE.MathUtils.lerp(0.38, 1.0, twilight);
+        this.ambientLight.intensity = THREE.MathUtils.lerp(0.38, 0.75, twilight);
         this.ambientLight.color.setRGB(
-            THREE.MathUtils.lerp(0.10, 0.33, twilight),  // night: muted blue-grey
-            THREE.MathUtils.lerp(0.12, 0.20, twilight),
-            THREE.MathUtils.lerp(0.22, 0.13, twilight)   // more blue at night
+            THREE.MathUtils.lerp(0.10, 0.53, twilight),  // night: muted blue-grey → warm sandy day
+            THREE.MathUtils.lerp(0.12, 0.47, twilight),
+            THREE.MathUtils.lerp(0.22, 0.33, twilight)
         );
 
         // ── Hemisphere ───────────────────────────────────────────────────
-        this.hemisphereLight.intensity = THREE.MathUtils.lerp(0.35, 0.55, twilight);
-        // Night sky: steel blue  →  Dawn: burnt orange  →  Noon: warm orange
+        this.hemisphereLight.intensity = THREE.MathUtils.lerp(0.35, 0.45, twilight);
+        // Night sky: steel blue  →  Dawn: warm tan  →  Noon: bright hazy sand
         this.hemisphereLight.color.setRGB(
-            THREE.MathUtils.lerp(0.10, THREE.MathUtils.lerp(1.00, 1.00, dayFactor), twilight),
-            THREE.MathUtils.lerp(0.14, THREE.MathUtils.lerp(0.38, 0.55, dayFactor), twilight),
-            THREE.MathUtils.lerp(0.28, THREE.MathUtils.lerp(0.10, 0.10, dayFactor), twilight)
+            THREE.MathUtils.lerp(0.10, THREE.MathUtils.lerp(0.95, 1.00, dayFactor), twilight),
+            THREE.MathUtils.lerp(0.14, THREE.MathUtils.lerp(0.60, 0.80, dayFactor), twilight),
+            THREE.MathUtils.lerp(0.28, THREE.MathUtils.lerp(0.25, 0.45, dayFactor), twilight)
         );
-        // Ground bounce: cool dark blue at night → dark amber day
+        // Ground bounce: cool dark blue at night → warm sandy tan day
         this.hemisphereLight.groundColor.setRGB(
-            THREE.MathUtils.lerp(0.04, 0.24, twilight),
-            THREE.MathUtils.lerp(0.05, 0.08, twilight),
-            THREE.MathUtils.lerp(0.10, 0.00, twilight)
+            THREE.MathUtils.lerp(0.04, 0.72, twilight),
+            THREE.MathUtils.lerp(0.05, 0.50, twilight),
+            THREE.MathUtils.lerp(0.10, 0.18, twilight)
         );
 
         // ── Sky background + fog ─────────────────────────────────────────
-        // Night: #080E1E (deep blue)  Dawn: #5C2200 (amber)  Noon: #2D0E00
-        const bgR = THREE.MathUtils.lerp(0.032, THREE.MathUtils.lerp(0.36, 0.18, dayFactor), twilight);
-        const bgG = THREE.MathUtils.lerp(0.055, THREE.MathUtils.lerp(0.10, 0.05, dayFactor), twilight);
-        const bgB = THREE.MathUtils.lerp(0.120, THREE.MathUtils.lerp(0.00, 0.00, dayFactor), twilight);
+        // Night: #080E1E (deep blue)  Dawn: #D4915A (sand-amber)  Noon: #E8C080 (bright sand haze)
+        const bgR = THREE.MathUtils.lerp(0.032, THREE.MathUtils.lerp(0.83, 0.91, dayFactor), twilight);
+        const bgG = THREE.MathUtils.lerp(0.055, THREE.MathUtils.lerp(0.57, 0.75, dayFactor), twilight);
+        const bgB = THREE.MathUtils.lerp(0.120, THREE.MathUtils.lerp(0.35, 0.50, dayFactor), twilight);
         this.scene.background.setRGB(bgR, bgG, bgB);
         this.scene.fog.color.setRGB(bgR, bgG, bgB);
 
